@@ -35,9 +35,11 @@
 
     - name: Force existing users to comply with new policy upon next login
       command: chage -m 1 -M 180 -W 15 -I 15 {{ item }}
-      with_items: "{{ ansible_users_dir.split('/')[:-1] | map('basename') | list }}"
-      when: "'/home/' + item in ansible_users_dir.split('/')[:-1]"
-
+      with_fileglob:
+        - /home/*
+      loop_control:
+        loop_var: item
+      when: item is directory
   handlers:
     - name: restart ssh
       service:
