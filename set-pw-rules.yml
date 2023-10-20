@@ -18,11 +18,11 @@
         line: "{{ item.line }}"
         state: present
       loop:
-        - { regexp: "^minlen", line: "minlen = 10" }
-        - { regexp: "^minclass", line: "minclass = 4" }
-        - { regexp: "^maxrepeat", line: "maxrepeat = 3" }
-        - { regexp: "^remember", line: "remember = 6" }
-        - { regexp: "^retry", line: "retry = 3" }
+        - { regexp: "^# minlen", line: "minlen = 10" }
+        - { regexp: "^# minclass", line: "minclass = 4" }
+        - { regexp: "^# maxrepeat", line: "maxrepeat = 3" }
+        - { regexp: "^# remember", line: "remember = 6" }
+        - { regexp: "^# retry", line: "retry = 3" }
       notify:
         - restart ssh
 
