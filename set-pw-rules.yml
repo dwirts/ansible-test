@@ -1,0 +1,45 @@
+---
+- name: Set Password Policies on Debian 11
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Install necessary packages
+      apt:
+        name:
+          - libpam-pwquality
+          - cracklib-runtime
+        state: present
+
+    - name: Set password quality requirements in PAM
+      lineinfile:
+        dest: /etc/security/pwquality.conf
+        regexp: "^{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      loop:
+        - { regexp: "^minlen", line: "minlen = 10" }
+        - { regexp: "^minclass", line: "minclass = 4" }
+        - { regexp: "^maxrepeat", line: "maxrepeat = 3" }
+        - { regexp: "^remember", line: "remember = 6" }
+        - { regexp: "^retry", line: "retry = 3" }
+      notify:
+        - restart ssh
+
+    - name: Enforce password change every 180 days
+      lineinfile:
+        dest: /etc/login.defs
+        regexp: '^PASS_MAX_DAYS'
+        line: 'PASS_MAX_DAYS   180'
+        state: present
+
+    - name: Force existing users to comply with new policy upon next login
+      command: chage -m 1 -M 180 -W 15 -I 15 {{ item }}
+      with_items: "{{ ansible_users_dir.split('/')[:-1] | map('basename') | list }}"
+      when: "'/home/' + item in ansible_users_dir.split('/')[:-1]"
+
+  handlers:
+    - name: restart ssh
+      service:
+        name: ssh
+        state: restarted
