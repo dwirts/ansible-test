@@ -1,0 +1,40 @@
+---
+- name: IP von DHCP auf Static ändern basierend auf individuellen envs Dateien
+  hosts: debian
+  become: yes
+  tasks:
+    - name: Überprüfe ob NetworkManager installiert ist
+      command: dpkg -l | grep network-manager
+      ignore_errors: true
+      register: network_manager_installed
+      changed_when: false
+
+    - name: Setze statische IP wenn NetworkManager installiert ist
+      block:
+        - name: Deaktiviere DHCP im NetworkManager
+          command: "nmcli connection modify {{ interface_name }} ipv4.method manual ipv4.addresses '{{ static_ip }}/{{ netmask | ipaddr('prefix') }}' ipv4.gateway '{{ gateway }}' ipv4.dns '{{ dns_
+servers | join(',') }}'"
+        - name: Starte NetworkManager neu
+          service:
+            name: NetworkManager
+            state: restarted
+      when: network_manager_installed.stdout | search("network-manager")
+
+    - name: Setze statische IP wenn NetworkManager NICHT installiert ist
+      block:
+        - name: Sichere die aktuelle Netzwerkkonfiguration
+          copy:
+            src: /etc/network/interfaces
+            dest: /etc/network/interfaces.backup
+        - name: Setze statische IP in /etc/network/interfaces
+          blockinfile:
+            path: /etc/network/interfaces
+            block: |
+              iface {{ interface_name }} inet static
+              address {{ static_ip }}
+              netmask {{ netmask }}
+              gateway {{ gateway }}
+              dns-nameservers {{ dns_servers | join(' ') }}
+        - name: Starte Netzwerk neu
+          command: systemctl restart networking
+      when: not network_manager_installed.stdout | search("network-manager")
