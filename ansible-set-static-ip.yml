@@ -3,11 +3,10 @@
   hosts: debian
   become: yes
   tasks:
-    - name: Überprüfe ob NetworkManager installiert ist
-      command: dpkg -l | grep network-manager
-      ignore_errors: true
-      register: network_manager_installed
-      changed_when: false
+    - name: Überprüfe, ob NetworkManager installiert ist
+      command: dpkg-query -l network-manager
+      register: dpkg_query_result
+      ignore_errors: yes
 
     - name: Setze statische IP wenn NetworkManager installiert ist
       block:
@@ -18,7 +17,7 @@ servers | join(',') }}'"
           service:
             name: NetworkManager
             state: restarted
-      when: network_manager_installed.stdout | search("network-manager")
+      when: dpkg_query_result.rc == 0
 
     - name: Setze statische IP wenn NetworkManager NICHT installiert ist
       block:
@@ -37,4 +36,4 @@ servers | join(',') }}'"
               dns-nameservers {{ dns_servers | join(' ') }}
         - name: Starte Netzwerk neu
           command: systemctl restart networking
-      when: not network_manager_installed.stdout | search("network-manager")
+      when: dpkg_query_result.rc != 0
