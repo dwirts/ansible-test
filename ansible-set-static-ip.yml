@@ -3,6 +3,10 @@
   hosts: debian
   become: yes
   tasks:
+    - name: Zeige den Wert der Variable an
+      debug:
+        var: interface_name
+
     - name: Überprüfe, ob NetworkManager installiert ist
       command: dpkg-query -l network-manager
       register: dpkg_query_result
