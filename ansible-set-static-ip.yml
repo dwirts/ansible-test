@@ -11,8 +11,7 @@
     - name: Setze statische IP wenn NetworkManager installiert ist
       block:
         - name: Deaktiviere DHCP im NetworkManager
-          command: "nmcli connection modify {{ interface_name }} ipv4.method manual ipv4.addresses '{{ static_ip }}/{{ netmask | ipaddr('prefix') }}' ipv4.gateway '{{ gateway }}' ipv4.dns '{{ dns_
-servers | join(',') }}'"
+          command: "nmcli connection modify {{ interface_name }} ipv4.method manual ipv4.addresses '{{ static_ip }}/{{ netmask | ipaddr('prefix') }}' ipv4.gateway '{{ gateway }}' ipv4.dns '{{ dns_servers | join(',') }}'"
         - name: Starte NetworkManager neu
           service:
             name: NetworkManager
